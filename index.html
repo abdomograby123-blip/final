@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>حاسبة المواد + الإنكليزي</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2dd4bf">
+
+  <style>
+    :root{
+      --bg1:#0b1020; --bg2:#101b3a;
+      --card:rgba(255,255,255,.08);
+      --stroke:rgba(255,255,255,.14);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.70);
+      --shadow: 0 18px 70px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh;
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(900px 520px at 15% 10%, rgba(45,212,191,.25), transparent 55%),
+        radial-gradient(760px 520px at 85% 30%, rgba(99,102,241,.25), transparent 55%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      display:grid; place-items:center;
+      padding:24px 14px;
+    }
+    .wrap{ width:min(980px, 100%); display:grid; gap:14px; }
+    .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:0 4px;}
+    .brand{font-weight:900; letter-spacing:.2px}
+    .chipBtn{border:1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.07); color: var(--text); cursor:pointer; font-weight:900; padding:10px 12px; border-radius:999px; display:flex; gap:8px; align-items:center;}
+    .grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+    @media (max-width:980px){.grid{grid-template-columns:1fr;}}
+    .card{background: linear-gradient(180deg, var(--card), rgba(255,255,255,.06)); border:1px solid var(--stroke); border-radius:22px; box-shadow:var(--shadow); backdrop-filter:blur(10px); position:relative;}
+    .card>*{position:relative; z-index:1;}
+    .passGlow::before, .failGlow::before{content:"";position:absolute; inset:-1px; pointer-events:none; border-radius:22px; opacity:.7; filter:blur(18px); z-index:0;}
+    .passGlow::before{background:radial-gradient(600px 240px at 20% 0%, rgba(34,197,94,.22), transparent 55%), radial-gradient(520px 240px at 80% 0%, rgba(45,212,191,.22), transparent 55%);}
+    .failGlow::before{background:radial-gradient(600px 240px at 20% 0%, rgba(244,63,94,.24), transparent 55%), radial-gradient(520px 240px at 80% 0%, rgba(251,113,133,.20), transparent 55%);}
+    .header{padding:18px 18px 10px; display:flex; justify-content:space-between; align-items:flex-start; gap:12px;}
+    .title{margin:0; font-size:18px; font-weight:900;}
+    .subtitle{margin:6px 0 0; color:var(--muted); font-size:13px;}
+    .badge{padding:8px 10px; border-radius:999px; border:1px solid var(--stroke); background:rgba(255,255,255,.08); font-size:12px; color:var(--muted);}
+    .content{padding:0 18px 18px;}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    @media (max-width:520px){.grid2{grid-template-columns:1fr;}}
+    label{display:block; margin:10px 0 6px; color:var(--muted); font-size:13px;}
+    input, select{width:100%; padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,.16); background:rgba(10,14,30,.55); color:var(--text); font-size:16px; transition:.18s;}
+    input:focus, select:focus{border-color:rgba(45,212,191,.55); background:rgba(10,14,30,.75);}
+    .row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;}
+    .btn{flex:1; min-width:220px; border:none; border-radius:16px; padding:13px; font-size:16px; font-weight:900; background:linear-gradient(90deg, rgba(45,212,191,.95), rgba(99,102,241,.95)); color:#071018;}
+    .ghost{border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.07); color:var(--text); padding:13px; border-radius:16px;}
+    .note{margin-top:10px; color:var(--muted); font-size:12px;}
+    .result{padding:18px; display:flex; flex-direction:column; gap:12px;}
+    .meter{background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:14px;}
+    .meterTop{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:10px;}
+    .big{font-size:40px; font-weight:900;}
+    .small{color:var(--muted); font-size:13px;}
+    .bar{height:10px; background:rgba(255,255,255,.10); border-radius:999px; border:1px solid rgba(255,255,255,.10);}
+    .fill{height:100%; width:0%; border-radius:999px; background:linear-gradient(90deg, rgba(45,212,191,.95), rgba(99,102,241,.95)); transition:width .55s;}
+    .status{display:flex; gap:10px; padding:14px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14); border-radius:18px;}
+    .icon{width:40px;height:40px;border-radius:14px; display:grid;place-items:center; background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.14);}
+    @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(6px);}40%{transform:translateX(-6px);}60%{transform:translateX(4px);}80%{transform:translateX(-4px);}}
+  </style>
+</head>
+
+<body>
+
+  <canvas id="fx"></canvas>
+  <div id="rain" class="rain" aria-hidden="true"></div>
+
+  <div class="wrap">
+
+    <!-- ===== قسم المواد ===== -->
+    <section class="card passGlow" id="matCard">
+      <div class="header">
+        <div><h2 class="title">قسم المواد</h2></div>
+        <div class="badge">النجاح من 60</div>
+      </div>
+      <div class="content">
+        <div class="grid2">
+          <div><label>وظيفة المواد</label><input id="matAss" type="number" min="0" max="100" step="0.01" value="0"></div>
+          <div><label>فحص المواد</label><input id="matExam" type="number" min="0" max="100" step="0.01" value="0"></div>
+        </div>
+        <div class="grid2">
+          <div><label>وزن الوظيفة</label><select id="matW"><option value="0.25">0.25</option><option value="0.30">0.30</option></select></div>
+          <div><label>جبر الفواصل</label><select id="matRound"><option value="ceil">للأعلى</option><option value="nearest">للأقرب</option><option value="floor">للأسفل</option></select></div>
+        </div>
+        <div class="row">
+          <button class="btn" id="matCalc">احسب</button>
+          <button class="ghost" id="matReset">تصفير</button>
+        </div>
+        <div class="note">المعادلة: (وظيفة × الوزن) + (فحص × (1-الوزن))</div>
+        <div class="result">
+          <div class="meter">
+            <div class="meterTop"><div><div class="small">بعد التقريب</div><div class="big" id="matFinal">—</div></div><div><div class="small">قبل التقريب</div><div id="matRaw" class="small">—</div></div></div>
+            <div class="bar"><div id="matFill" class="fill"></div></div>
+          </div>
+          <div class="status" id="matStatusBox"><div class="icon" id="matIcon">📚</div><div><div id="matMsgTitle">جاهز</div><div id="matMsgBody" class="small">ادخل العلامات واضغط احسب.</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== قسم الإنكليزي ===== -->
+    <section class="card passGlow" id="engCard">
+      <div class="header">
+        <div><h2 class="title">قسم الإنكليزي</h2></div>
+        <div class="badge">النجاح من 60</div>
+      </div>
+      <div class="content">
+        <div class="grid2">
+          <div><label>وظيفة الإنكليزي</label><input id="engAss" type="number" min="0" max="100" step="0.01" value="0"></div>
+          <div><label>فحص الإنكليزي</label><input id="engExam" type="number" min="0" max="100" step="0.01" value="0"></div>
+        </div>
+        <div class="grid2">
+          <div><label>الأوزان</label><input value="0.20 / 0.80" disabled></div>
+          <div><label>جبر الفواصل</label><select id="engRound"><option value="ceil">للأعلى</option><option value="nearest">للأقرب</option><option value="floor">للأسفل</option></select></div>
+        </div>
+        <div class="row">
+          <button class="btn" id="engCalc">احسب</button>
+          <button class="ghost" id="engReset">تصفير</button>
+        </div>
+        <div class="note">المعادلة: (وظيفة × 0.2) + (فحص × 0.8)</div>
+        <div class="result">
+          <div class="meter">
+            <div class="meterTop"><div><div class="small">بعد التقريب</div><div class="big" id="engFinal">—</div></div><div><div class="small">قبل التقريب</div><div id="engRaw" class="small">—</div></div></div>
+            <div class="bar"><div id="engFill" class="fill"></div></div>
+          </div>
+          <div class="status" id="engStatusBox"><div class="icon" id="engIcon">🇬🇧</div><div><div id="engMsgTitle">جاهز</div><div id="engMsgBody" class="small">ادخل العلامات واضغط احسب.</div></div></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    const clamp100 = v => {const x=Number(v); return Number.isFinite(x)?Math.min(100,Math.max(0,x)):0};
+    const roundByMode = (x,mode)=>mode==="ceil"?Math.ceil(x):mode==="floor"?Math.floor(x):Math.round(x);
+
+    const matAss=document.getElementById("matAss"), matExam=document.getElementById("matExam"),
+          matW=document.getElementById("matW"), matRound=document.getElementById("matRound"),
+          matCalc=document.getElementById("matCalc"), matReset=document.getElementById("matReset"),
+          matFinal=document.getElementById("matFinal"), matRaw=document.getElementById("matRaw"),
+          matFill=document.getElementById("matFill"), matStatusBox=document.getElementById("matStatusBox"),
+          matIcon=document.getElementById("matIcon"), matMsgTitle=document.getElementById("matMsgTitle"),
+          matMsgBody=document.getElementById("matMsgBody");
+
+    function calculateMaterials(){
+      const a=clamp100(matAss.value), e=clamp100(matExam.value), w=Number(matW.value), raw=a*w+e*(1-w), final=roundByMode(raw, matRound.value);
+      matRaw.textContent=raw.toFixed(2); matFinal.textContent=final; matFill.style.width=Math.min(100,Math.max(0,raw))+"%";
+      const pass=final>=60;
+      matStatusBox.classList.toggle("pass",pass); matStatusBox.classList.toggle("fail",!pass);
+      matIcon.textContent=pass?"🎉":"😢"; matMsgTitle.textContent=pass?"مبروك":"للأسف";
+      matMsgBody.textContent=`نتيجتك: ${final} (قبل التقريب: ${raw.toFixed(2)})`;
+    }
+    function resetMaterials(){
+      matAss.value=0; matExam.value=0; matW.value="0.25"; matRound.value="ceil";
+      matFinal.textContent="—"; matRaw.textContent="—"; matFill.style.width="0%";
+      matIcon.textContent="📚"; matMsgTitle.textContent="جاهز"; matMsgBody.textContent="ادخل …";
+    }
+    matCalc.onclick=calculateMaterials; matReset.onclick=resetMaterials;
+
+    const engAss=document.getElementById("engAss"), engExam=document.getElementById("engExam"),
+          engRound=document.getElementById("engRound"), engCalc=document.getElementById("engCalc"),
+          engReset=document.getElementById("engReset"), engFinal=document.getElementById("engFinal"),
+          engRaw=document.getElementById("engRaw"), engFill=document.getElementById("engFill"),
+          engStatusBox=document.getElementById("engStatusBox"), engIcon=document.getElementById("engIcon"),
+          engMsgTitle=document.getElementById("engMsgTitle"), engMsgBody=document.getElementById("engMsgBody");
+
+    function calculateEnglish(){
+      const a=clamp100(engAss.value), e=clamp100(engExam.value), raw=a*0.2+e*0.8, final=roundByMode(raw, engRound.value);
+      engRaw.textContent=raw.toFixed(2); engFinal.textContent=final; engFill.style.width=Math.min(100,Math.max(0,raw))+"%";
+      const pass=final>=60;
+      engStatusBox.classList.toggle("pass",pass); engStatusBox.classList.toggle("fail",!pass);
+      engIcon.textContent=pass?"🎉":"😢"; engMsgTitle.textContent=pass?"مبروك":"للأسف";
+      engMsgBody.textContent=`نتيجتك: ${final} (قبل التقريب: ${raw.toFixed(2)})`;
+    }
+    function resetEnglish(){
+      engAss.value=0; engExam.value=0; engRound.value="ceil";
+      engFinal.textContent="—"; engRaw.textContent="—"; engFill.style.width="0%";
+      engIcon.textContent="🇬🇧"; engMsgTitle.textContent="جاهز"; engMsgBody.textContent="ادخل …";
+    }
+    engCalc.onclick=calculateEnglish; engReset.onclick=resetEnglish;
+  </script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js");
+    }
+  </script>
+
+</body>
+</html>
